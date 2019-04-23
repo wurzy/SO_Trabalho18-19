@@ -1,13 +1,10 @@
-#include <unistd.h>
 #include <fcntl.h>
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
-
-#define NUMBER_SIZE   "%08ld"
-#define POINTER_SIZE  "%08ld"
-#define PRICE_SIZE    "%010.2f"
-#define ARTIGO_LENG   28
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include "readline.h"
+#include "defines.h"
 
 off_t insert_strings(char *nome){
   int fd = open("strings", O_CREAT | O_RDWR, 0777);
@@ -34,21 +31,38 @@ void insert_artigo(char *nome, char *preco){
 void alteraNome(char *codigo, char *nome){
   long int num = atol(codigo);
   off_t offset = num * (ARTIGO_LENG +1);
-  int fd = open("artigos", O_RDONLY, 0777);
-  lseek(fd, offset, SEEK_SET);
+  int fd1 = open("artigos", O_RDWR, 0777);
+  int fd2 = open("strings", O_RDWR, 0777);
+  int fd3 = open("deprecated", O_CREAT | O_RDWR, 0777);
+  lseek(fd1, offset, SEEK_SET);
 
   char buf[100]; // Perceber o pq de só dar com 100
-  read(fd, &buf, ARTIGO_LENG);
+  read(fd1, &buf, ARTIGO_LENG);
   char *field = strndup(buf + 9, 8); // 9 = size(numero) + " "
-  close(fd);
 
   char name[100];
   sprintf(name, "%s\n",nome);
-  fd = open("strings", O_RDWR, 0777);
-  offset = atol(field);
-  lseek(fd, offset, SEEK_SET);
-  write(fd, name, strlen(name));
-  close(fd);
+  int offset2 = atol(field);
+  lseek(fd2, offset2, SEEK_SET);
+
+  char lin[100];
+  ssize_t size;
+  size = readln(fd2, lin, 100);
+  sprintf(buf, "%s %s\n", field, lin);
+  lseek(fd3, 0, SEEK_END);
+  write(fd3, buf, 9 + size - 1);
+
+  offset2 = lseek(fd2, 0, SEEK_END);
+  printf("%ld\n", offset);
+  write(fd2, name, strlen(name));
+
+  sprintf(buf, POINTER_SIZE, offset2);
+  lseek(fd1, offset + NUMBER_LEN_I + 1, SEEK_SET);
+  write(fd1, buf, POINTER_LEN_I);
+
+  close(fd1);
+  close(fd2);
+  close(fd3);
 }
 
 int main(int argc, char** argv){
