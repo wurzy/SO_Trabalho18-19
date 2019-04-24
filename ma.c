@@ -68,6 +68,19 @@ void alteraNome(char *codigo, char *nome){
   close(fd3);
 }
 
+void alteraPreco(char *codigo, char *preco){
+  long int num = atol(codigo);
+  double price = atof(preco);
+  off_t offset = num * (ARTIGO_LENG +1);
+
+  int fd = open("artigos", O_RDWR, 0777);
+  lseek(fd, offset + NUMBER_LEN_I +1 + POINTER_LEN_I +1, SEEK_SET);
+
+  char newPrice[100];
+  snprintf(newPrice, PRICE_LEN_I +1, PRICE_SIZE, price); /* Porque +1 ? */
+  write(fd, newPrice, PRICE_LEN_I);
+}
+
 int main(int argc, char** argv){
   if (argc < 4){
     perror("Número de elementos do input inferior ao que é necessário");
@@ -79,10 +92,12 @@ int main(int argc, char** argv){
   else
     if(strcmp("n", argv[1]) == 0)
       alteraNome(argv[2], argv[3]);
-  /*
     else
       if(strcmp("p", argv[1]) == 0)
         alteraPreco(argv[2], argv[3]);
-        */
-  return 0;
+      else{
+        /* escrever para o stderr */
+        return -1;
+      }
+  return EXIT_SUCCESS;
 }
