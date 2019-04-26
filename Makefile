@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -g
-MA = ma.c readline.c
+MA = ma.c readline.c qsort.c
 
 ma:
 	$(CC) $(CFLAGS) $(MA) -o ma
