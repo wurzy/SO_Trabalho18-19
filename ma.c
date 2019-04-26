@@ -99,23 +99,24 @@ char** sort_deprecated(int deprecated, int size){
 }
 
 void adjust_artigos(int artigos, int y, int number_i, int leng_i, int total){
-  lseek(artigos, 0, SEEK_SET);
+  //lseek(artigos, 0, SEEK_SET);
   int size = y / (ARTIGO_LENG + 1);
   int offset = number_i * (ARTIGO_LENG + 1);
   leng_i -= total;
-  lseek(artigos, offset + NUMBER_LEN_I + 1, SEEK_CUR);
+  lseek(artigos, offset + NUMBER_LEN_I + 1, SEEK_SET);
   char lin[20], str[20];
   long int value;
   for (int i = number_i; i <= size; i++){
     read(artigos, lin, POINTER_LEN_I);
     value = atol(lin);
-    value -= leng_i;
+    //value -= leng_i;
     snprintf(str, POINTER_LEN_I + 1, POINTER_SIZE, value);
     write(artigos, str, POINTER_LEN_I);
-    lseek(artigos, ARTIGO_LENG + 1, SEEK_CUR);
+    lseek(artigos, ARTIGO_LENG - POINTER_LEN_I, SEEK_CUR);
   }
 }
 
+/* TODO: descontar o numero de bytes que ja foram escritos */
 void verify_deprecated(){
   int artigos = open("artigos", O_RDWR, 0777);
   int strings = open("strings", O_RDWR, 0777);
@@ -134,18 +135,19 @@ void verify_deprecated(){
     int pointer_i, number_i, leng_i;
     for(int i=0; i<x; i++){
       lseek(strings2, 0, SEEK_END);
-      pointer_i = atoi(strndup(dep_buf[i], POINTER_LEN_I));
-      number_i  = atoi(strndup(dep_buf[i] + POINTER_LEN_I + 1, NUMBER_LEN_I));
-      leng_i    = atoi(strndup(dep_buf[i] + POINTER_LEN_I + 1 + NUMBER_LEN_I + 1 + MAX_INT_LEN, MAX_INT_LEN));
-      char buf[pointer_i + 1];
-      read(strings, buf, pointer_i);
+      pointer_i = atoi(strndup(dep_buf[i], POINTER_LEN_I)); write(STDOUT_FILENO, dep_buf[i], POINTER_LEN_I);
+      number_i  = atoi(strndup(dep_buf[i] + POINTER_LEN_I + 1, NUMBER_LEN_I)); write(STDOUT_FILENO, dep_buf[i] + POINTER_LEN_I + 1, NUMBER_LEN_I);
+      leng_i    = atoi(strndup(dep_buf[i] + POINTER_LEN_I + 1 + NUMBER_LEN_I + 1, MAX_INT_LEN)); write(STDOUT_FILENO, dep_buf[i] + POINTER_LEN_I + 1 + NUMBER_LEN_I + 1, MAX_INT_LEN);
+      char buf[pointer_i];
+      read(strings, buf, pointer_i); write(STDOUT_FILENO, buf, pointer_i); puts("Acabou a string");
       write(strings2, buf, pointer_i);
       lseek(strings, leng_i, SEEK_CUR);
-      adjust_artigos(artigos, offset_artigos, number_i, leng_i, total);
+      //adjust_artigos(artigos, offset_artigos, number_i, leng_i, total);
       total += leng_i;
     }
     off_t offset_atual = lseek(strings, 0, SEEK_CUR);
     off_t offset_total = lseek(strings, 0, SEEK_END);
+    lseek(strings, offset_atual, SEEK_SET);
     char buf[offset_total - offset_atual + 1];
     read(strings, buf, offset_total - offset_atual);
     write(strings2, buf, offset_total - offset_atual);
@@ -165,8 +167,8 @@ int main(int argc, char** argv){
     insert_artigo(argv[2], argv[3]);
   else
     if(strcmp("n", argv[1]) == 0){
-      verify_deprecated();
       alteraNome(argv[2], argv[3]);
+      verify_deprecated();
     }
     else
       if(strcmp("p", argv[1]) == 0)
