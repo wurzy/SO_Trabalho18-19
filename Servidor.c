@@ -110,14 +110,12 @@ void updateStock_Of(int id, int quantidade) {
   }
 }
 
-void startServer(){
+void startServer(int server){
   char buffer[1024];
   int n;
   int flag = 0;
   char space = ' ';
-  mkfifo("server", 0666); //fifo para trocar mensagens
 
-  int server = open("server",O_RDONLY,0666);
 
   while((n = read(server,buffer,1024))>0 || 1) {
     if(n>0) {
@@ -133,11 +131,13 @@ void startServer(){
         getPreco_Stock_Of(atoi(buffer));
       }
     }
+    flag = 0;
   }
-  close(server);
 }
 
 int main() {
+  mkfifo("server", 0666); //fifo para trocar mensagens
+  int server = open("server",O_RDONLY,0666);
   //char *string = strdup("Hello there, peasants!");
   //off_t s = 5;
 /*
@@ -146,7 +146,8 @@ int main() {
     getPreco_Stock_Of(i);
   }
   */
-  startServer();
+  startServer(server);
+  close(server);
 
 /*
   char buffer[1024];
