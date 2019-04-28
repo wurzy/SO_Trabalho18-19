@@ -29,10 +29,17 @@
 /* macro para por o numero com PRICE_LEN casas       */
 #define PRICE_SIZE    "%0"PRICE_LEN".2f"
 
-/* macro para o numero de casas teem os stocks */
-#define STK_LEN       10
-#define STK_SIZE      "%0"STK_LEN"ld"
+/* macro para o numero de casas teem os stocks, 11 contando com o - */
+#define STK_LEN       11
+#define STK_LEN_S     "11"
+/* para a escrita de stock */
+#define STK_SIZE      "%0"STK_LEN_S"ld\n"
 /* macro para saber quant casas ocupa uma linha de stocks */
 #define STK_LEN_TOT   STK_LEN + 1
+
+/* para o maior int possivel */
+#define MAX_INT_NUM   2147483647
+/* para o menor int possivel */
+#define MIN_INT_NUM   -2147483648
 
 #endif

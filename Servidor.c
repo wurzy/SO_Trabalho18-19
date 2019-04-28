@@ -70,17 +70,39 @@ void getPreco_Stock_Of(int id) {
   }
 }
 
+int is_Overflow(int x, int y){
+  //if(x - 1 > (MAX_INT_NUM) || x - 1 < (MIN_INT_NUM)) return 1;
+  //printf("Debug %d\n", sizeof(*MEMx));
+//  if(sizeof(*MEMx)>4) return 1;
+  if ((y > 0 && x > MAX_INT_NUM - y) || (y < 0 && x < MIN_INT_NUM - y)){
+    return 1;
+  }
+  else{
+    return 0;
+  }
+/*
+  // Checking if addition will cause overflow
+    if (num1 > MAX_INT_NUM - num2)
+        return -1;
+
+   // No overflow occured
+    else
+        return num1 + num2;
+*/
+}
+
+
 void updateStock_Of(int id, int quantidade) {
-  if(!verificaID(id)){
+  if(!verificaID(id)){ //|| is_Overflow(quantidade,1)){
     puts("not available");
   }
   else{
-    char ints[32];
+    char ints[15];
     int fd = open("STOCKS",O_WRONLY,0666);
 
-    sprintf(ints, STK_SIZE ,quantidade);
+    sprintf(ints, STK_SIZE , (long int) quantidade);
 
-    off_t offsetStock = id*(STK_LEN);
+    off_t offsetStock = id*(STK_LEN_TOT);
     lseek(fd,offsetStock,SEEK_SET);
     write(fd,ints,strlen(ints));
     close(fd);
@@ -88,13 +110,16 @@ void updateStock_Of(int id, int quantidade) {
   }
 }
 
+
 int main() {
   //char *string = strdup("Hello there, peasants!");
   //off_t s = 5;
+
   for(int i = 0; i<21; i++) {
+    updateStock_Of(i,MAX_INT_NUM);
     getPreco_Stock_Of(i);
-    //updateStock_Of(i,i);
   }
+
   /*
   char buffer[1024];
 	int fd,n;
