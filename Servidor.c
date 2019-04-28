@@ -110,31 +110,60 @@ void updateStock_Of(int id, int quantidade) {
   }
 }
 
+void startServer(){
+  char buffer[1024];
+  int n;
+  int flag = 0;
+  char space = ' ';
+  mkfifo("server", 0666); //fifo para trocar mensagens
+
+  int server = open("server",O_RDONLY,0666);
+
+  while((n = read(server,buffer,1024))>0 || 1) {
+    if(n>0) {
+      for(int i = 0; i < n; i++) {
+        if(buffer[i] == space) {
+          updateStock_Of(atoi(buffer),atoi(buffer + i));
+          flag = 1;
+          break;
+        }
+      }
+      if(!flag) {
+        //write(1,"ola\n",4);
+        getPreco_Stock_Of(atoi(buffer));
+      }
+    }
+  }
+  close(server);
+}
 
 int main() {
   //char *string = strdup("Hello there, peasants!");
   //off_t s = 5;
-
+/*
   for(int i = 0; i<21; i++) {
     updateStock_Of(i,MAX_INT_NUM);
     getPreco_Stock_Of(i);
   }
+  */
+  startServer();
 
-  /*
+/*
   char buffer[1024];
 	int fd,n;
 
 	mkfifo("server", 0666); //fifo para trocar mensagens
 
-	int stocks = open("STOCKS",O_CREAT | O_WRONLY, 0666);
+	//int stocks = open("STOCKS",O_CREAT | O_WRONLY, 0666);
 	fd = open("server",O_RDONLY);
 
 	while((n = read(fd,buffer,1024))>0 || 1) {
 		if(n>0) {
-      opcao2Gestao(string);
-			write(stocks,buffer,n);
+      //opcao2Gestao(string);
+			//write(stocks,buffer,n);
 			write(1,buffer,n);
 		}
 	}
+  close(fd);
   */
 }
