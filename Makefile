@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -g
-MA = ma.c readline.c qsort.c
+MA = ma.c readline.c qsort.c compactador.c
 SV = Servidor.c
 CL = Cliente.c
 
