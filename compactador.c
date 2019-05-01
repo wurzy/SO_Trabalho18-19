@@ -94,5 +94,6 @@ void verify_deprecated(){
 
   /* tentar fazer com exec's: rm e mv */
   remove("strings");
+  remove("deprecated");
   rename("temp", "strings");
 }
