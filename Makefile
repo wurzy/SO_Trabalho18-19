@@ -1,11 +1,16 @@
 CC = gcc
 CFLAGS = -Wall -g
-MA = ma.c readline.c qsort.c compactador.c
+
+##############   ma   ##################
+OBJSMA = $(patsubst %.c,%.o, ma.c readline.c qsort.c compactador.c)
+MA = ma
+########################################
+
 SV = Servidor.c
 CL = Cliente.c
 
-ma:
-	$(CC) $(CFLAGS) $(MA) -o ma
+$(MA): $(OBJSMA)
+	$(CC) $(CFLAGS) $(OBJSMA) -o $(MA)
 
 sv:
 	$(CC) $(CFLAGS) $(SV) -o sv
@@ -20,4 +25,9 @@ delete:
 	rm -rf artigos strings deprecated log.txt
 
 clean:
-	rm -rf *.out ma sv cl
+	@echo "Cleaning..."
+	@echo ""
+	@cat .art/train
+	@rm -rf *.o *.out ma sv cl
+	@echo ""
+	@echo "Done!"
