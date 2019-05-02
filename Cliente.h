@@ -1,6 +1,7 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-void cliente(char *arg, int n);
-
+void opcao1(char *string);
+void opcao2(char *string1, char *string2);
+ 
 #endif

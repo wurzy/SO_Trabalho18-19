@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "defines.h"
+#include "Utility.h"
 
 static int verificaID(int id){
   int fd = open("STOCKS",O_RDONLY, 0666);
@@ -21,21 +22,28 @@ static int verificaID(int id){
   return (id>=at?0:1);
 }
 
+// qAtual = qtd ficheiro, qInput = qtd input
+static int manageStock(int qAtual, int qInput) {
+  int novaQ;
+   novaQ = qAtual + qInput;
+  if(qInput < 0 && novaQ < 0) { // 200 e -300 -> 0
+  	return 0;
+  }
+
+  return novaQ;
+}
+
 void getPreco_Stock_Of(int id) {
 
   if(!verificaID(id)) {
     // nao e possivel ir buscar este id
-    puts("not available");
+    printOut("Invalid ID\n");
   }
   else {
     int fd = open("STOCKS",O_RDONLY, 0666);
     char stock[STK_LEN + 1];
 
-    char ints[32];
-    char floats[64];
-
-    int stockNum;
-    float precoNum;
+    char toPrint[100];
 
     char preco[PRICE_LEN_I + 1];
     int fd2 = open("artigos",O_RDONLY,0666);
@@ -49,22 +57,16 @@ void getPreco_Stock_Of(int id) {
     read(fd2,&preco,PRICE_LEN_I);
 
     //tratamento das strings
-    precoNum = atof(preco);
-    sprintf(floats,"%.2f",precoNum);
-    write(1,"PRECO: ", 7);
-    write(1,floats,strlen(floats));
-
-    write(1," ",1);
+    sprintf(toPrint,"PRECO: %f ",atof(preco));
 
     // ler desse offset 9 bytes (conto com o \n)
     lseek(fd,offsetStock,SEEK_SET);
     read(fd,&stock,STK_LEN);
-    //tratamento das strings
-    stockNum = atoi(stock);
-    sprintf(ints,"%d\n",stockNum);
-    write(1,"STOCK: ",7);
-    write(1,ints,strlen(ints));
 
+    sprintf(toPrint,"%sSTOCK: %d\n",toPrint,atoi(stock));
+
+    //write(STDOUT_FILENO,toPrint,strlen(toPrint));
+    printOut(toPrint);
     close(fd);
     close(fd2);
   }
@@ -94,17 +96,27 @@ int is_Overflow(int x, int y){
 
 void updateStock_Of(int id, int quantidade) {
   if(!verificaID(id)){ //|| is_Overflow(quantidade,1)){
-    puts("not available");
+    printOut("Invalid ID\n");
   }
   else{
+    char print[100];
     char ints[15];
-    int fd = open("STOCKS",O_WRONLY,0666);
-
-    sprintf(ints, STK_SIZE , (long int) quantidade);
+    char stockArr[STK_LEN];
+    int fd = open("STOCKS",O_RDWR,0666);
 
     off_t offsetStock = id*(STK_LEN_TOT);
+
+    lseek(fd,offsetStock,SEEK_SET);
+    read(fd,&stockArr,STK_LEN);
+    int stock = manageStock(atoi(stockArr),quantidade);
+
+    sprintf(ints, STK_SIZE , (long int) stock);
+
     lseek(fd,offsetStock,SEEK_SET);
     write(fd,ints,strlen(ints));
+
+    //sprintf(print,"OK. ID [%d]: updated STOCK from [%d] to [%d]\n",id,atoi(stockArr),stock);
+  //  printOut(print);
     close(fd);
 
   }

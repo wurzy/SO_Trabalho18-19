@@ -2,22 +2,7 @@
 #define UTILITY_H_
 
 void createFifo(char *name);
+void printOut(char *string);
+void timeString(char buffer[]);
 
 #endif
-
-00000000
-11111111
-22222222
-33333333
-44444444
-55555555
-66666666
-77777777
-88888888
-99999999
-10101010
-11111111
-12121212
-13131313
-14141414
-15151515

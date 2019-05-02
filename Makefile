@@ -6,7 +6,7 @@ OBJSMA = $(patsubst %.c,%.o, ma.c readline.c qsort.c compactador.c)
 MA = ma
 ########################################
 
-SV = Servidor.c
+SV = Utility.c Servidor.c 
 CL = Cliente.c
 
 $(MA): $(OBJSMA)
