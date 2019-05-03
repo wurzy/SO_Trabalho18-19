@@ -82,6 +82,39 @@ void alteraPreco(char *codigo, char *preco){
 }
 
 int main(int argc, char** argv){
+
+  ssize_t size;
+  do{
+    char* buffer = (char*)malloc(sizeof(char) * 1024);
+    char** buf = (char**)malloc(sizeof(char*) * 3);
+    char* found;
+    int i=0;
+    size = readln(STDIN_FILENO, buffer, 1024);
+    while((found = strsep(&buffer," ")) != NULL)
+      buf[i++] = strdup(found);
+
+    buf[2] = strndup(buf[2], strlen(buf[2]) - 1); // tirar o \n
+
+    switch(buf[0][0]){
+      case 'i':
+        insert_artigo(buf[1], buf[2]);
+        break;
+      case 'n':
+        alteraNome(buf[1], buf[2]);
+        verify_deprecated();
+        break;
+      case 'p':
+        alteraPreco(buf[1], buf[2]);
+        break;
+      default:
+        break;
+    }
+    free(buffer);
+    free(buf);
+    free(found);
+  } while(size > 0);
+
+  /*
   if (argc < 4){
     perror("Número de elementos do input inferior ao que é necessário");
     exit(-1);
@@ -98,8 +131,8 @@ int main(int argc, char** argv){
       if(strcmp("p", argv[1]) == 0)
         alteraPreco(argv[2], argv[3]);
       else{
-        /* escrever para o stderr */
         return -1;
       }
+  */
   return EXIT_SUCCESS;
 }
