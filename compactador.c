@@ -31,7 +31,7 @@ void adjust_strings(int deprecated, int temp, int strings, int point, int leng, 
   lseek(strings, leng, SEEK_CUR);
 }
 
-void adjust_artigos(int artigos, int numb, int leng, int size_artigos){
+void adjust_artigos(int artigos, int point, int numb, int leng, int size_artigos){
   int offset;
   char str[10];
   for(int j=numb; j<size_artigos; j++){
@@ -40,9 +40,11 @@ void adjust_artigos(int artigos, int numb, int leng, int size_artigos){
     read(artigos, str, 8);
     lseek(artigos, offset, SEEK_SET);
     int atual = atoi(str);
-    int novo = atual - leng;
-    snprintf(str, 8 + 1, "%08d", novo);
-    write(artigos, str, 8);
+    if (atual >= point){
+      int novo = atual - leng;
+      snprintf(str, 8 + 1, "%08d", novo);
+      write(artigos, str, 8);
+    }
   }
 }
 
@@ -82,7 +84,7 @@ void verify_deprecated(){
     numb = atoi(strndup(buffer[i] + 9, 8));
     leng = atoi(strndup(buffer[i] + 18, 10));
     adjust_strings(deprecated, temp, strings, point, leng, acc);
-    adjust_artigos(artigos, numb, leng, size_artigos);
+    adjust_artigos(artigos, point, numb, leng, size_artigos);
     acc += point + leng;
   }
   paste(strings, temp);
