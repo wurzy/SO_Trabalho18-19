@@ -42,4 +42,8 @@
 /* para o menor int possivel */
 #define MIN_INT_NUM   -2147483648
 
+#define VENDAS_INT    11
+#define VENDAS_INT_S  "11"
+#define VENDAS_S      "%0"VENDAS_INT_S"ld\n"
+
 #endif

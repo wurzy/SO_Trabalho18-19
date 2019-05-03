@@ -10,7 +10,7 @@
 #include "Utility.h"
 
 static int verificaID(int id){
-  int fd = open("STOCKS",O_RDONLY, 0666);
+  int fd = open("stocks",O_RDONLY, 0666);
 
   off_t max = lseek(fd,0,SEEK_END);
   // calcula numero total / 11 (da o ID)
@@ -24,13 +24,10 @@ static int verificaID(int id){
 
 // qAtual = qtd ficheiro, qInput = qtd input
 static int manageStock(int qAtual, int qInput) {
-  int novaQ;
-   novaQ = qAtual + qInput;
-  if(qInput < 0 && novaQ < 0) { // 200 e -300 -> 0
-  	return 0;
-  }
-
-  return novaQ;
+  //if(qInput < 0 && novaQ < 0) { // 200 e -300 -> 0
+  	//return -1;
+  //}
+  return qAtual + qInput;
 }
 
 void getPreco_Stock_Of(int id) {
@@ -40,10 +37,10 @@ void getPreco_Stock_Of(int id) {
     printOut("Invalid ID\n");
   }
   else {
-    int fd = open("STOCKS",O_RDONLY, 0666);
+    int fd = open("stocks",O_RDONLY, 0666);
     char stock[STK_LEN + 1];
 
-    char toPrint[100];
+    char toPrint[128];
 
     char preco[PRICE_LEN_I + 1];
     int fd2 = open("artigos",O_RDONLY,0666);
@@ -66,9 +63,9 @@ void getPreco_Stock_Of(int id) {
     sprintf(toPrint,"%sSTOCK: %d\n",toPrint,atoi(stock));
 
     //write(STDOUT_FILENO,toPrint,strlen(toPrint));
-    printOut(toPrint);
     close(fd);
     close(fd2);
+    printOut(toPrint);
   }
 }
 
@@ -93,31 +90,86 @@ int is_Overflow(int x, int y){
 */
 }
 
+void manageVendas(int id, int quantidade){
+
+  int fd = open("vendas",O_RDWR,0666);
+  off_t seeker = lseek(fd,0,SEEK_END);
+  int modqtd = abs(quantidade);
+  /*
+  //se so for um EOF
+  if(seeker<1) {
+    char vendas[16];
+    sprintf(vendas,VENDAS_S, (long int) 0);
+    write(fd,vendas,VENDAS_INT + 1);
+  }
+  else{
+  */
+    char all[64];
+    int fd2 = open("artigos", O_RDONLY, 0666);
+    char preco[PRICE_LEN_I + 1];
+    off_t offsetPreco = id*(ARTIGO_LENG+1) + 2 + NUMBER_LEN_I + POINTER_LEN_I;
+    //char id[NUMBER_LEN_I + 1];
+    //char quantidade[STK_LEN + 1]
+    lseek(fd2,offsetPreco,SEEK_SET);
+    read(fd2,preco,PRICE_LEN_I);
+
+    sprintf(all,"%010ld %011ld %s\n",(long int) id, (long int) modqtd, preco);
+    lseek(fd,seeker,SEEK_SET);
+    write(fd,all,strlen(all));
+    close(fd2);
+//  }
+  close(fd);
+}
 
 void updateStock_Of(int id, int quantidade) {
   if(!verificaID(id)){ //|| is_Overflow(quantidade,1)){
     printOut("Invalid ID\n");
   }
   else{
-    char print[100];
-    char ints[15];
-    char stockArr[STK_LEN];
-    int fd = open("STOCKS",O_RDWR,0666);
+    //char *printer = malloc(sizeof(char)*100);
+    int fdven = open("vendas",O_CREAT | O_RDWR,0666);
+    off_t seeker = lseek(fdven,0,SEEK_END);
+
+    //se so for um EOF
+    if(seeker<1) {
+      char vendas[16];
+      sprintf(vendas,VENDAS_S, (long int) 0);
+      write(fdven,vendas,VENDAS_INT + 1);
+    }
+
+    char printer[128];
+    char ints[32];
+    char stockArr[STK_LEN+1];
+    int fd = open("stocks",O_RDWR,0666);
 
     off_t offsetStock = id*(STK_LEN_TOT);
 
     lseek(fd,offsetStock,SEEK_SET);
     read(fd,&stockArr,STK_LEN);
-    int stock = manageStock(atoi(stockArr),quantidade);
+    int stockfrom = atoi(stockArr);
+    int stock = manageStock(stockfrom,quantidade);
+
+    // serve para quando stock = 1 e qtd = -23, ele escrever no vendas 1
+    if(stock<0) {
+      stock = 0;
+      if(stockfrom>0) {
+        quantidade = stockfrom;
+        manageVendas(id,quantidade);
+      }
+    }
+    else if (quantidade<0 ) {
+      manageVendas(id,quantidade);
+    }
 
     sprintf(ints, STK_SIZE , (long int) stock);
 
     lseek(fd,offsetStock,SEEK_SET);
     write(fd,ints,strlen(ints));
 
-    //sprintf(print,"OK. ID [%d]: updated STOCK from [%d] to [%d]\n",id,atoi(stockArr),stock);
-  //  printOut(print);
+    sprintf(printer,"OK. ID [%d]: updated STOCK from [%d] to [%d]\n",id,stockfrom,stock);
     close(fd);
+    close(fdven);
+    printOut(printer);
 
   }
 }
@@ -160,7 +212,6 @@ int main() {
   }
   */
   startServer();
-
 
 /*
   char buffer[1024];
