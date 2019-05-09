@@ -113,7 +113,9 @@ int main(int argc, char** argv){
     while((found = strsep(&buffer," ")) != NULL)
       buf[i++] = strdup(found);
 
-    buf[2] = strndup(buf[2], strlen(buf[2]) - 1); // tirar o \n
+    if(i==3) {
+      buf[2] = strndup(buf[2], strlen(buf[2]) - 1); // tirar o \n
+    }
 
     switch(buf[0][0]){
       case 'i':
