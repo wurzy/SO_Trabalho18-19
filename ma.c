@@ -19,11 +19,18 @@ off_t insert_strings(char *nome){
 
 void insert_artigo(char *nome, char *preco){
   char buf[50];
+  char buf2[13];
+  int fd2 = open("stocks", O_CREAT | O_WRONLY | O_APPEND,0666);
   int fd = open("artigos", O_CREAT | O_RDWR, 0666);
   off_t s = lseek(fd, 0, SEEK_END);
   off_t offset = insert_strings(nome);
+  int aux = s/ARTIGO_LENG;
+  char auxArray[20];
+  sprintf(auxArray,"%d\n",aux);
+  write(STDOUT_FILENO,auxArray,strlen(auxArray));
   float price = atof(preco);
-
+  snprintf(buf2,13,STK_SIZE,(long int) 0);
+  write(fd2,buf2,12);
   sprintf(buf, NUMBER_SIZE" "POINTER_SIZE" "PRICE_SIZE"\n",s/ARTIGO_LENG,offset,price);
   write(fd, buf, strlen(buf));
   close(fd);

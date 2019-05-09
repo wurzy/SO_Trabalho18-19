@@ -1,13 +1,14 @@
 CC = gcc
-CFLAGS = -Wall -g
+CFLAGS = -Wall -lm -g
 
 ##############   ma   ##################
 OBJSMA = $(patsubst %.c,%.o, ma.c readline.c qsort.c compactador.c)
 MA = ma
 ########################################
 
-SV = Utility.c Servidor.c 
-CL = Cliente.c
+SV = Utility.c Servidor.c
+CL = Utility.c Cliente.c
+AG = Utility.c Cliente.c
 
 $(MA): $(OBJSMA)
 	$(CC) $(CFLAGS) $(OBJSMA) -o $(MA)
@@ -15,8 +16,11 @@ $(MA): $(OBJSMA)
 sv:
 	$(CC) $(CFLAGS) $(SV) -o sv
 
-cl:
-	$(CC) $(CFLAGS) $(CL) -o cl
+cv:
+	$(CC) $(CFLAGS) $(CL) -o cv
+
+ag:
+	$(CC) $(CFLAGS) $(AG) -o ag
 
 cat:
 	cat artigos && cat strings
@@ -28,6 +32,6 @@ clean:
 	@echo "Cleaning..."
 	@echo ""
 	@cat .art/train
-	@rm -rf *.o *.out ma sv cl
+	@rm -rf *.o *.out ma sv cv
 	@echo ""
 	@echo "Done!"

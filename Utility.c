@@ -26,6 +26,22 @@ void timeString(char buffer[]){
   sprintf(buffer,"%02d-%02d-%02dT%02d:%02d:%02d\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 }
 
+size_t myreadln(int fildes, void* buf, ssize_t nbyte){
+  ssize_t size = 0;
+  int res;
+  char byte;
+  char *buffer = (char*)buf; // casting void*
+  while ((res = read(fildes,&byte,1) > 0) && size < nbyte){
+    if (byte == '\0')
+      return size;
+    buffer[size++] = byte;
+    if (byte == '\n')
+      return size;
+  }
+  return size;
+}
+
+
 
 /*
 int main(){
