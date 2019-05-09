@@ -186,25 +186,13 @@ int updateStock_Of(int id, int quantidade) {
     int stockfrom = atoi(stockArr);
     printf("STOCKFROM: %d\n", stockfrom);
     printf("qtdade %d\n",quantidade );
-    if(quantidade < 0 && stockfrom<abs(quantidade)) {
+    if((stockfrom + quantidade) < 0) {
       printf("N quero atualizar\n" );
       return -1;
     }
-    // serve para quando stock = 1 e qtd = -23, ele escrever no vendas 1
-/*
-    if(stock<0) {
-      stock = 0;
-      if(stockfrom>0) {
-        quantidade = stockfrom;
-        manageVendas(id,quantidade);
-      }
-    }
-    else if (quantidade<0 ) {
+    if(quantidade<0) {
       manageVendas(id,quantidade);
     }
-    */
-    manageVendas(id,quantidade);
-
     int stock = stockfrom + quantidade;
     sprintf(ints, STK_SIZE , (long int) stock);
 
