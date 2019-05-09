@@ -9,6 +9,46 @@
 #include "defines.h"
 #include "Utility.h"
 
+void agr_handler(int signum) {
+
+  int fd = open("vendas",O_RDWR,0666);
+  int to_ag = open("para_agregar",O_CREAT | O_TRUNC | O_RDWR,0666);
+  char buf[11];
+  char buf2[1024];
+  int fds[2];
+  pipe(fds);
+  int n = read(fd,buf,11);
+  printf("buf: %.11s\n", buf);
+  off_t offset = atol(strndup(buf,10));
+  lseek(fd,0,SEEK_SET);
+  printf("OFFSET %ld\n",offset );
+  lseek(fd,offset + 12,SEEK_SET);
+  while((n=read(fd,buf2,1024))>0) {
+    write(to_ag,buf2,n);
+  }
+  off_t vendasNovo = lseek(fd,0,SEEK_END);
+  lseek(fd,0,SEEK_SET);
+  snprintf(buf2,12,"%011ld",vendasNovo);
+  write(fd,buf2,11);
+  if (!fork())  {
+   close(fds[0]); //close read from pipe, in parent
+   dup2(fds[1], STDOUT_FILENO); // Replace stdout with the write end of the pipe
+   close(fds[1]); // Don't need another copy of the pipe write end hanging about
+   execlp("cat", "cat", "para_agregar", NULL);
+  }
+  else{
+    if(!fork()) {
+      close(fds[1]); //close write to pipe, in child
+      dup2(fds[0], STDIN_FILENO); // Replace stdin with the read end of the pipe
+      close(fds[0]); // Don't need another copy of the pipe read end hanging about
+      execlp("./ag", "./ag", NULL);
+    }
+  }
+
+  printf("Hitler is alive\n" );
+  exit(0);
+}
+
 static int verificaID(int id){
   int fd = open("stocks",O_RDONLY, 0666);
 
@@ -304,7 +344,15 @@ void teste(){
   }
 }
 */
+
 int main() {
+  signal(SIGUSR1,agr_handler);
+  int pid = getpid();
+  char buf[10];
+  int fd = open("pid_sv",O_CREAT | O_WRONLY | O_TRUNC, 0666);
+  sprintf(buf,"%d\n",pid);
+  write(fd,buf,strlen(buf));
+  close(fd);
   startServer();
   /*
   char returned[100];

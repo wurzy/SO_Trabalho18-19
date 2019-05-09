@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
+#include <sys/types.h>
 #include "readline.h"
 #include "defines.h"
 #include "compactador.h"
@@ -88,6 +90,17 @@ void alteraPreco(char *codigo, char *preco){
   write(fd, newPrice, PRICE_LEN_I);
 }
 
+void agrega(){
+  int fd = open("pid_sv",O_RDONLY);
+  char buf[10];
+  read(fd,buf,10);
+  //printf("pid %s\n",buf );
+  int pid = atoi(buf);
+  printf("pid %d\n",pid );
+  kill(pid,SIGUSR1);
+  close(fd);
+}
+
 int main(int argc, char** argv){
 
   ssize_t size;
@@ -113,6 +126,8 @@ int main(int argc, char** argv){
       case 'p':
         alteraPreco(buf[1], buf[2]);
         break;
+      case 'a':
+        agrega();
       default:
         break;
     }
