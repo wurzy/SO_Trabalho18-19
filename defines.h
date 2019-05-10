@@ -46,4 +46,6 @@
 #define VENDAS_INT_S  "11"
 #define VENDAS_S      "%0"VENDAS_INT_S"ld\n"
 
+#define CACHE_SIZE    1024
+
 #endif
