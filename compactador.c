@@ -34,7 +34,7 @@ void adjust_strings(int deprecated, int temp, int strings, int point, int leng, 
 void adjust_artigos(int artigos, int point, int numb, int leng, int size_artigos){
   int offset;
   char str[10];
-  for(int j=numb; j<size_artigos; j++){
+  for(int j=0; j<size_artigos; j++){
     offset = j * 29 + 9;
     lseek(artigos, offset, SEEK_SET);
     read(artigos, str, 8);
@@ -62,18 +62,22 @@ void verify_deprecated(){
   int deprecated = open("deprecated", O_RDWR, 0666);
   int strings = open("strings", O_RDWR, 0666);
   int artigos = open("artigos", O_RDWR, 0666);
+  int bytes = open("bytes", O_RDONLY, 0666);
 
-  off_t x = lseek(deprecated, 0, SEEK_END);
-  long int size = x / 29;
-  lseek(deprecated, 0, SEEK_SET);
+  int size;
+  read(bytes, &size, sizeof(int));
+
+  off_t x = lseek(strings, 0, SEEK_END);
+  lseek(strings, 0, SEEK_SET);
 
   off_t y = lseek(artigos, 0, SEEK_END);
   long int size_artigos = y / 29;
   lseek(artigos, 0, SEEK_SET);
 
-  if (size < size_artigos * 0.2)
+  if (size < ((int) x) * 0.2)
     return ;
 
+  puts("vou agregar");
   int temp = open("temp", O_CREAT | O_RDWR | O_TRUNC, 0666);
 
   char** buffer = read_deprecated(deprecated, size);
@@ -93,9 +97,10 @@ void verify_deprecated(){
   close(strings);
   close(artigos);
   close(temp);
+  close(bytes);
 
-  /* tentar fazer com exec's: rm e mv */
-  remove("strings");
-  remove("deprecated");
+  unlink("strings");
+  unlink("deprecated");
+  unlink("bytes");
   rename("temp", "strings");
 }

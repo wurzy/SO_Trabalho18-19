@@ -16,6 +16,7 @@ off_t insert_strings(char *nome){
   char buf[size];
   sprintf(buf, "%s\n", nome);
   write(fd, buf, strlen(buf));
+  close(fd);
   return offset;
 }
 
@@ -26,15 +27,36 @@ void insert_artigo(char *nome, char *preco){
   int fd = open("artigos", O_CREAT | O_RDWR, 0666);
   off_t s = lseek(fd, 0, SEEK_END);
   off_t offset = insert_strings(nome);
-  int aux = s/ARTIGO_LENG;
+  int aux = s/(ARTIGO_LENG +1);
   char auxArray[20];
   sprintf(auxArray,"%d\n",aux);
   write(STDOUT_FILENO,auxArray,strlen(auxArray));
   float price = atof(preco);
   snprintf(buf2,13,STK_SIZE,(long int) 0);
   write(fd2,buf2,12);
-  sprintf(buf, NUMBER_SIZE" "POINTER_SIZE" "PRICE_SIZE"\n",s/ARTIGO_LENG,offset,price);
+  sprintf(buf, NUMBER_SIZE" "POINTER_SIZE" "PRICE_SIZE"\n",s/(ARTIGO_LENG+1),offset,price);
   write(fd, buf, strlen(buf));
+  close(fd);
+  close(fd2);
+}
+
+void guardarBytes(int b){
+  int fd = open("bytes", O_CREAT | O_RDWR, 0666);
+  off_t offset = lseek(fd, 0, SEEK_END);
+  long x;
+  long bytes = (long) b;
+  if(offset == 0){
+    /* nao tem nada no ficheiro */
+    write(fd, &bytes, sizeof(long));
+  }
+  else{
+    /* significa que tem lá alguma coisa */
+    lseek(fd, 0, SEEK_SET);
+    read(fd, &x, sizeof(long));
+    bytes += x;
+    lseek(fd, 0, SEEK_SET);
+    write(fd, &bytes, sizeof(long));
+  }
   close(fd);
 }
 
@@ -48,7 +70,7 @@ void alteraNome(char *codigo, char *nome){
 
   lseek(fd1, offset, SEEK_SET);
 
-  char buf[DEFAULT_SIZE]; // Perceber o pq de só dar com 100
+  char buf[DEFAULT_SIZE];
   read(fd1, &buf, ARTIGO_LENG);
 
   char *identifier = strndup(buf, NUMBER_LEN_I);
@@ -61,6 +83,7 @@ void alteraNome(char *codigo, char *nome){
 
   char lin[DEFAULT_SIZE], buffer[DEFAULT_SIZE];
   ssize_t size = readln(fd2, lin, DEFAULT_SIZE);
+  guardarBytes(size);
   snprintf(buffer, DEPREC_LEN + 2, "%s %s %010ld\n", field, identifier, size);
   lseek(fd3, 0, SEEK_END);
   write(fd3, buffer, DEPREC_LEN + 1);
@@ -78,6 +101,13 @@ void alteraNome(char *codigo, char *nome){
 }
 
 void alteraPreco(char *codigo, char *preco){
+  int fd1 = open("pid_sv",O_RDONLY);
+  char buf[10];
+  read(fd1,buf,10);
+  int pid = atoi(buf);
+  kill(pid,SIGUSR2);
+  close(fd1);
+
   long int num = atol(codigo);
   double price = atof(preco);
   off_t offset = num * (ARTIGO_LENG +1);
@@ -86,7 +116,7 @@ void alteraPreco(char *codigo, char *preco){
   lseek(fd, offset + NUMBER_LEN_I +1 + POINTER_LEN_I +1, SEEK_SET);
 
   char newPrice[DEFAULT_SIZE];
-  snprintf(newPrice, PRICE_LEN_I +1, PRICE_SIZE, price); /* Porque +1 ? */
+  snprintf(newPrice, PRICE_LEN_I +1, PRICE_SIZE, price);
   write(fd, newPrice, PRICE_LEN_I);
 }
 
@@ -94,9 +124,7 @@ void agrega(){
   int fd = open("pid_sv",O_RDONLY);
   char buf[10];
   read(fd,buf,10);
-  //printf("pid %s\n",buf );
   int pid = atoi(buf);
-  printf("pid %d\n",pid );
   kill(pid,SIGUSR1);
   close(fd);
 }
@@ -104,17 +132,25 @@ void agrega(){
 int main(int argc, char** argv){
 
   ssize_t size;
-  do{
-    char* buffer = (char*)malloc(sizeof(char) * 1024);
+  char buffer[1024];
+  char* temp;
+  while((size = readln(STDIN_FILENO, buffer, 1024)) > 0){
+    temp = strdup(buffer);
     char** buf = (char**)malloc(sizeof(char*) * 3);
     char* found;
     int i=0;
-    size = readln(STDIN_FILENO, buffer, 1024);
-    while((found = strsep(&buffer," ")) != NULL)
+    while((found = strsep(&temp," ")) != NULL)
       buf[i++] = strdup(found);
 
-    if(i==3) {
-      buf[2] = strndup(buf[2], strlen(buf[2]) - 1); // tirar o \n
+    if(i == 3){
+      i=0;
+      while(1){
+        if(buf[2][i] == '\n'){
+          buf[2][i] = '\0';
+          break;
+        }
+        i++;
+      }
     }
 
     switch(buf[0][0]){
@@ -133,30 +169,9 @@ int main(int argc, char** argv){
       default:
         break;
     }
-    free(buffer);
+    free(temp);
     free(buf);
     free(found);
-  } while(size > 0);
-
-  /*
-  if (argc < 4){
-    perror("Número de elementos do input inferior ao que é necessário");
-    exit(-1);
   }
-
-  if(strcmp("i", argv[1]) == 0)
-    insert_artigo(argv[2], argv[3]);
-  else
-    if(strcmp("n", argv[1]) == 0){
-      alteraNome(argv[2], argv[3]);
-      verify_deprecated();
-    }
-    else
-      if(strcmp("p", argv[1]) == 0)
-        alteraPreco(argv[2], argv[3]);
-      else{
-        return -1;
-      }
-  */
-  return EXIT_SUCCESS;
+  return 0;
 }

@@ -8,9 +8,68 @@
 #include <sys/stat.h>
 #include "defines.h"
 #include "Utility.h"
+#include "Cache.h"
+
+Cache cache;
+
+void cache_handler(int signum) {
+  int id;
+  int fd = open("artigos",O_RDONLY);
+  off_t offset;
+  char precos[12];
+  int preco;
+  for(int i = 0; i<cache->ocupados; i++) {
+    id = cache->cached[i]->id;
+    offset = id*29+19;
+    lseek(fd,offset,SEEK_SET);
+    read(fd,precos,12);
+    preco = atoi(precos);
+    cache->cached[i]->preco = preco;
+  }
+  close(fd);
+}
 
 void agr_handler(int signum) {
 
+  int fd = open("vendas",O_RDWR,0666);
+  int to_ag = open("para_agregar", O_CREAT | O_TRUNC | O_RDWR, 0666);
+  char buf[12];
+  char buf2[1024];
+  int fds[2];
+  pipe(fds);
+  int n = read(fd,buf,12);
+  /* printf("buf: %.11s\n", buf); */
+  off_t offset = atol(strndup(buf,11));
+  lseek(fd,0,SEEK_SET);
+  /* printf("OFFSET %ld\n",offset ); */
+  lseek(fd,offset + 12,SEEK_SET);
+  while((n = read(fd,buf2,1024)) > 0) {
+    write(to_ag,buf2,n);
+  }
+  off_t vendasNovo = lseek(fd,0,SEEK_END) -12;
+  lseek(fd,0,SEEK_SET);
+  snprintf(buf2,12,"%011ld",vendasNovo);
+  write(fd,buf2,11);
+  if (!fork()){
+    char time[1024];
+    timeString(time);
+    int data = open(time, O_CREAT | O_WRONLY, 0666);
+    dup2(data, STDOUT_FILENO);
+    close(data);
+    execlp("./agregador.sh", "agregador.sh", NULL);
+    _exit(0);
+  }
+  else{
+    wait(NULL);
+  }
+  close(to_ag);
+  unlink("para_agregar");
+  close(fd);
+}
+
+/*
+void agr_handler(int signum) {
+  int status;
   int fd = open("vendas",O_RDWR,0666);
   int to_ag = open("para_agregar",O_CREAT | O_TRUNC | O_RDWR,0666);
   char buf[11];
@@ -26,29 +85,38 @@ void agr_handler(int signum) {
   while((n=read(fd,buf2,1024))>0) {
     write(to_ag,buf2,n);
   }
-  off_t vendasNovo = lseek(fd,0,SEEK_END);
+  off_t vendasNovo = lseek(fd,0,SEEK_END) -12;
   lseek(fd,0,SEEK_SET);
   snprintf(buf2,12,"%011ld",vendasNovo);
   write(fd,buf2,11);
   if (!fork())  {
-   close(fds[0]); //close read from pipe, in parent
-   dup2(fds[1], STDOUT_FILENO); // Replace stdout with the write end of the pipe
-   close(fds[1]); // Don't need another copy of the pipe write end hanging about
+   close(STDOUT_FILENO);
+   dup(fds[1]);
+   close(fds[0]);
+   close(fds[1]);
    execlp("cat", "cat", "para_agregar", NULL);
+   perror("cat");
   }
-  else{
-    if(!fork()) {
-      close(fds[1]); //close write to pipe, in child
-      dup2(fds[0], STDIN_FILENO); // Replace stdin with the read end of the pipe
+  if(!fork()) {
+      close(STDIN_FILENO); //close write to pipe, in child
+      dup(fds[0]); // Replace stdin with the read end of the pipe
+      close(fds[1]); // Don't need another copy of the pipe read end hanging about
       close(fds[0]); // Don't need another copy of the pipe read end hanging about
       execlp("./ag", "./ag", NULL);
+      perror("ag");
     }
+    //unlink("para_agregar");
+    //_exit(0);
+  else {
+    close(fds[0]);
+    close(fds[1]);
+    wait(&status);
+    wait(&status);
   }
+  unlink("para_agregar");
 
-  printf("Hitler is alive\n" );
-  exit(0);
 }
-
+*/
 static int verificaID(int id){
   int fd = open("stocks",O_RDONLY, 0666);
 
@@ -127,8 +195,8 @@ int is_Overflow(int x, int y){
 
 void manageVendas(int id, int quantidade){
 
-  int fd = open("vendas",O_RDWR,0666);
-  off_t seeker = lseek(fd,0,SEEK_END);
+  int fd = open("vendas",O_RDWR | O_APPEND,0666);
+  //off_t seeker = lseek(fd,0,SEEK_END);
   int modqtd = abs(quantidade);
   /*
   //se so for um EOF
@@ -140,18 +208,30 @@ void manageVendas(int id, int quantidade){
   else{
   */
     char all[64];
-    int fd2 = open("artigos", O_RDONLY, 0666);
     char preco[PRICE_LEN_I + 1];
-    off_t offsetPreco = id*(ARTIGO_LENG+1) + 2 + NUMBER_LEN_I + POINTER_LEN_I;
+    int fetched = fetchPreco(cache,id);
+    int montante;
+    if(fetched==-1) {
+      printf("aceitei fetched = -1\n" );
+      int fd2 = open("artigos", O_RDONLY, 0666);
+      off_t offsetPreco = id*(ARTIGO_LENG+1) + 2 + NUMBER_LEN_I + POINTER_LEN_I;
+      lseek(fd2,offsetPreco,SEEK_SET);
+      read(fd2,preco,PRICE_LEN_I);
+      montante = atoi(preco)*modqtd;
+      close(fd2);
+    }
+    else {
+      printf("aceitei else fetched\n" );
+      //sprintf(preco,"%d",fetched);
+      montante = fetched*modqtd;
+    }
+    cache = addToCache(cache, id);
+    printCache(cache);
     //char id[NUMBER_LEN_I + 1];
     //char quantidade[STK_LEN + 1]
-    lseek(fd2,offsetPreco,SEEK_SET);
-    read(fd2,preco,PRICE_LEN_I);
-    int montante = atoi(preco)*modqtd;
     sprintf(all,"%010ld %011ld %011ld\n",(long int) id, (long int) modqtd, (long int) montante);
-    lseek(fd,seeker,SEEK_SET);
+    //lseek(fd,seeker,SEEK_SET);
     write(fd,all,strlen(all));
-    close(fd2);
 //  }
   close(fd);
 }
@@ -174,7 +254,6 @@ int updateStock_Of(int id, int quantidade) {
       write(fdven,vendas,VENDAS_INT + 1);
       close(fdven);
     }
-
     char ints[32];
     char stockArr[STK_LEN+1];
     int fd = open("stocks",O_RDWR,0666);
@@ -190,6 +269,7 @@ int updateStock_Of(int id, int quantidade) {
       printf("N quero atualizar\n" );
       return -1;
     }
+    close(fdven);
     if(quantidade<0) {
       manageVendas(id,quantidade);
     }
@@ -229,7 +309,7 @@ void startServer(){
      char** new = (char**)malloc(sizeof(char*) * 3);
 
      puts("tou aqui");
-     if((n = read(client_to_server,buf,27)) > 0) {
+     if((n = read(client_to_server,buf,28)) > 0) {
        puts("passei");
 
        printf("READ from cl: %s\n", buf);
@@ -256,10 +336,12 @@ void startServer(){
          //printf("WRITING to cl: %s\n",eu );
          sprintf(sender,"%d %.2f\n",returned[1],((float) returned[0])/100);
          if(res!=(-1)) {
+           printf("WRITING: %s\n",sender);
            write(server_to_client,sender,strlen(sender));
+           //write(server_to_client,"\n",1);
          }
          else {
-           write(server_to_client,"\n",1);
+           //write(server_to_client,"\n",1);
          }
        }
        else if (i==3) {
@@ -270,9 +352,11 @@ void startServer(){
          sprintf(sender,"%d\n",stock);
          if(stock!=(-1)){
            write(server_to_client,sender,strlen(sender));
+           printf("WRITING: %s\n",sender);
+          // write(server_to_client,"\n",1);
          }
          else {
-           write(server_to_client,"\n",1);
+           //write(server_to_client,"\n",1);
          }
        }
 
@@ -333,15 +417,22 @@ void teste(){
 }
 */
 
-int main() {
-  signal(SIGUSR1,agr_handler);
+void createPid(){
   int pid = getpid();
   char buf[10];
   int fd = open("pid_sv",O_CREAT | O_WRONLY | O_TRUNC, 0666);
   sprintf(buf,"%d\n",pid);
   write(fd,buf,strlen(buf));
   close(fd);
+}
+
+int main() {
+  createPid();
+  signal(SIGUSR1,agr_handler);
+  signal(SIGUSR2,cache_handler);
+  cache=initCache(cache);
   startServer();
+  freeCache(cache);
   /*
   char returned[100];
   char str[100] = "1234 6 3\n";

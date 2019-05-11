@@ -1,29 +1,40 @@
 CC = gcc
-CFLAGS = -Wall -lm -g
+CFLAGS = -Wall -g
 
-##############   ma   ##################
 OBJSMA = $(patsubst %.c,%.o, ma.c readline.c qsort.c compactador.c)
 MA = ma
-########################################
 
-SV = Utility.c Servidor.c
-CL = Utility.c Cliente.c
-AG = Utility.c Cliente.c
+OBJSSV = $(patsubst %.c,%.o, Cache.c Utility.c Servidor.c)
+SV = sv
+
+OBJSCL = $(patsubst %.c,%.o, Utility.c Cliente.c)
+CL = cv
+
+OBJSAG = $(patsubst %.c,%.o, Utility.c Agregador.c)
+AG = ag
+
+ALL = $(patsubst %.c,%.o,$(wildcard *.c))
+
+all:$(ALL)
+	$(CC) $(CFLAGS) $(OBJSMA) -o $(MA)
+	$(CC) $(CFLAGS) $(OBJSSV) -o $(SV)
+	$(CC) $(CFLAGS) $(OBJSCL) -o $(CL)
+	$(CC) $(CFLAGS) $(OBJSAG) -o $(AG) -lm
 
 $(MA): $(OBJSMA)
 	$(CC) $(CFLAGS) $(OBJSMA) -o $(MA)
 
-sv:
-	$(CC) $(CFLAGS) $(SV) -o sv
+$(SV): $(OBJSSV)
+	$(CC) $(CFLAGS) $(OBJSSV) -o $(SV)
 
-cv:
-	$(CC) $(CFLAGS) $(CL) -o cv
+$(CL): $(OBJSCL)
+	$(CC) $(CFLAGS) $(OBJSCL) -o $(CL)
 
-ag:
-	$(CC) $(CFLAGS) $(AG) -o ag
+$(AG): $(OBJSAG)
+	$(CC) $(CFLAGS) $(OBJSAG) -o $(AG) -lm
 
 cat:
-	cat artigos && cat strings
+	cat artigos strings
 
 delete:
 	rm -rf artigos strings deprecated log.txt
