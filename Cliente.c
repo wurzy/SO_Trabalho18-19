@@ -52,10 +52,10 @@ int confirm(char *string,int len) {
 
 void startClient(){
     int client_to_server,n = 1;
-    const char *myfifo = "server"; //fifo unico
+    const char *myfifo = "server";
 
-    int server_to_client; // useless
-    char myfifo2[100]; //diretoria primitiva
+    int server_to_client;
+    char myfifo2[100];
 
     char* str = (char*)malloc(sizeof(char*) * 1024);
     char* oi[2];
@@ -63,7 +63,7 @@ void startClient(){
     char str3[1024];
     char* found;
     int i = 0;
-    pid_t pid = getpid(); // pid processo
+    pid_t pid = getpid();
     sprintf(myfifo2,"%d",pid);
     mkfifo(myfifo2, 0666);
 
@@ -91,7 +91,6 @@ void startClient(){
             n = myreadln(server_to_client,str3,20);
             str3[n]='\0';
             if (n>0) {
-              //printf("foi maior ZERO!\n");
               write(1,str3,n);
               break;
             }
@@ -99,7 +98,7 @@ void startClient(){
           close(server_to_client);
       }
     }
-    //unlink(myfifo2);
+    unlink(myfifo2);
 }
 
 int main(int argc, char* argv[]){
