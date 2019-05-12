@@ -48,15 +48,12 @@ int indexOf(Cache cache,int id,int *mins) {
 }
 
 Cache addToCache(Cache cache,int id){
-  printf("RECEBI ID = %d\n",id );
   int zero = 0;
   int existe = indexOf(cache,id,&zero);
   if(zero) {
-    printf("decidi ifzero\n");
     cache->cached[existe]->vendas++;
   }
   else {
-    printf("decidi else\n");
     int fd = open("artigos",O_RDONLY);
     off_t offset = id*29 + 19;
     char buffer[12];
@@ -64,19 +61,16 @@ Cache addToCache(Cache cache,int id){
     read(fd,buffer,12);
     int prc = atoi(buffer);
     if(cache->full) {
-      printf("decidi else if\n");
       cache->cached[existe]->id = id;
       cache->cached[existe]->vendas = 1;
       cache->cached[existe]->preco = prc;
     }
     else {
-      printf("decidi else else\n");
         cache->cached[cache->ocupados]->id = id;
         cache->cached[cache->ocupados]->preco = prc;
         cache->cached[cache->ocupados]->vendas = 1;
         cache->ocupados++;
         if(cache->ocupados >= CACHE_SIZE) {
-          printf("decidi else else if\n");
           cache->full = 1;
         }
     }
@@ -96,16 +90,6 @@ int fetchPreco(Cache cache,int id){
   return -1;
 }
 /*
-void fillCache(Cache cache) {
-  cache->ocupados = CACHE_SIZE;
-  cache->full = 1;
-  for(int i = 0; i < CACHE_SIZE; i++) {
-    cache->cached[i]->id = i+1;
-    cache->cached[i]->preco = (i+1)*100;
-    cache->cached[i]->vendas = 1;
-  }
-}
-*/
 void printCache(Cache cache){
   if(cache) {
     printf("Ocupados: %d / %d\n",cache->ocupados,CACHE_SIZE );
@@ -123,26 +107,5 @@ void printCache(Cache cache){
   else {
     printf("There is no Cache.\n");
   }
-}
-/*
-int main() {
-  //char venda[]="0000000000 00000000100 00000016900\n";
-  initCache();
-  printCache();
-  //fillCache();
-  addToCache(0);
-  addToCache(0);
-  addToCache(2);
-  addToCache(1);
-  addToCache(2);
-  addToCache(7);
-  addToCache(7);
-  addToCache(9);
-  addToCache(9);
-
-  printCache();
-
-  freeCache();
-  return EXIT_SUCCESS;
 }
 */
