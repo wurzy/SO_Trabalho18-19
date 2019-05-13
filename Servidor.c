@@ -65,6 +65,7 @@ void agr_handler(int signum) {
   close(fd);
 }
 
+
 static int verificaID(int id){
   int fd = open("stocks",O_RDONLY, 0666);
 
@@ -196,7 +197,7 @@ void startServer(){
 
    mkfifo(myfifo, 0666);
 
-   client_to_server = open(myfifo, O_RDWR);
+   client_to_server = open(myfifo, O_RDONLY);
 
 
    while(1) {

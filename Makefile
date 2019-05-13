@@ -43,6 +43,7 @@ clean:
 	@echo "Cleaning..."
 	@echo ""
 	@cat .art/train
-	@rm -rf *.o *.out ma sv cv
+	@rm -rf *.o *.out ag ma sv cv pid_sv server
 	@echo ""
 	@echo "Done!"
+        

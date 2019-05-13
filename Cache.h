@@ -19,6 +19,5 @@ int indexOf(Cache x,int id,int *mins);
 Cache addToCache(Cache x,int id);
 int fetchPreco(Cache x,int id);
 void fillCache(Cache x);
-void printCache(Cache x);
 
 #endif

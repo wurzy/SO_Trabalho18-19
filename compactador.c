@@ -76,8 +76,7 @@ void verify_deprecated(){
 
   if (size < ((int) x) * 0.2)
     return ;
-
-  puts("vou agregar");
+  write(1,"Fazendo compactação\n",strlen("Fazendo compactação\n"));
   int temp = open("temp", O_CREAT | O_RDWR | O_TRUNC, 0666);
 
   char** buffer = read_deprecated(deprecated, size);

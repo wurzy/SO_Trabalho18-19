@@ -67,9 +67,9 @@ void startClient(){
     sprintf(myfifo2,"%d",pid);
     mkfifo(myfifo2, 0666);
 
+    client_to_server = open(myfifo, O_WRONLY);
     while((n = myreadln(0,str,1024))>0) {
       if(!fork()) {
-        client_to_server = open(myfifo, O_WRONLY);
 
           while((found = strsep(&str," ")) != NULL)
             oi[i++] = strdup(found);
@@ -94,6 +94,7 @@ void startClient(){
               write(1,str3,n);
               break;
             }
+
           }
           close(server_to_client);
       }
